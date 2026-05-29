@@ -1,0 +1,9 @@
+[project]
+name = "whl-downloader"
+version = "0.1.0"
+description = "Download Python wheel packages with dependencies for offline installation"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+whl-downloader = "whl_downloader:main"

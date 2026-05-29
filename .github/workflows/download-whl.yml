@@ -1,0 +1,73 @@
+name: Download WHL Packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        description: "Python package name (e.g., requests, numpy)"
+        required: true
+        type: string
+      platform:
+        description: "Target platform"
+        required: true
+        type: choice
+        default: "windows"
+        options:
+          - windows
+          - linux
+          - macos
+      arch:
+        description: "Target architecture"
+        required: true
+        type: choice
+        default: "amd64"
+        options:
+          - amd64
+          - arm64
+      python-version:
+        description: "Target Python version"
+        required: true
+        type: string
+        default: "3.11"
+      package-version:
+        description: "Package version (leave empty for latest)"
+        required: false
+        type: string
+        default: ""
+
+jobs:
+  download:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run whl_downloader
+        env:
+          INPUT_PACKAGE: ${{ inputs.package }}
+          INPUT_PLATFORM: ${{ inputs.platform }}
+          INPUT_ARCH: ${{ inputs.arch }}
+          INPUT_PYTHON_VERSION: ${{ inputs.python-version }}
+          INPUT_PACKAGE_VERSION: ${{ inputs.package-version }}
+        run: |
+          VERSION_ARG=""
+          if [ -n "$INPUT_PACKAGE_VERSION" ]; then
+            VERSION_ARG="--version $INPUT_PACKAGE_VERSION"
+          fi
+          python whl_downloader.py "$INPUT_PACKAGE" \
+            --platform "$INPUT_PLATFORM" \
+            --arch "$INPUT_ARCH" \
+            --python-version "$INPUT_PYTHON_VERSION" \
+            $VERSION_ARG
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: whl-packages
+          path: "*.zip"
+          retention-days: 7
