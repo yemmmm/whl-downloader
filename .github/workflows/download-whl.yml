@@ -52,8 +52,8 @@ jobs:
           INPUT_PACKAGE: ${{ inputs.package }}
           INPUT_PLATFORM: ${{ inputs.platform }}
           INPUT_ARCH: ${{ inputs.arch }}
-          INPUT_PYTHON_VERSION: ${{ inputs.python-version }}
-          INPUT_PACKAGE_VERSION: ${{ inputs.package-version }}
+          INPUT_PYTHON_VERSION: ${{ inputs['python-version'] }}
+          INPUT_PACKAGE_VERSION: ${{ inputs['package-version'] }}
         run: |
           VERSION_ARG=""
           if [ -n "$INPUT_PACKAGE_VERSION" ]; then
