@@ -1,0 +1,57 @@
+name: Download Docker Image
+
+on:
+  workflow_dispatch:
+    inputs:
+      image:
+        description: "Docker image reference (e.g., nginx:1.27, redis:7-alpine)"
+        required: true
+        type: string
+      platform:
+        description: "Target image platform"
+        required: true
+        type: choice
+        default: "linux/amd64"
+        options:
+          - linux/amd64
+          - linux/arm64
+      artifact-name:
+        description: "Artifact name (leave empty to derive from image)"
+        required: false
+        type: string
+        default: ""
+
+jobs:
+  download:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pull and save image
+        env:
+          INPUT_IMAGE: ${{ inputs.image }}
+          INPUT_PLATFORM: ${{ inputs.platform }}
+          INPUT_ARTIFACT_NAME: ${{ inputs['artifact-name'] }}
+        run: |
+          set -euo pipefail
+
+          safe_name="$(printf '%s' "$INPUT_IMAGE" | sed 's#[/:@]#-#g')"
+          if [ -n "$INPUT_ARTIFACT_NAME" ]; then
+            safe_name="$(printf '%s' "$INPUT_ARTIFACT_NAME" | sed 's#[/:@]#-#g')"
+          fi
+
+          archive="${safe_name}.tar.gz"
+          artifact_name="$safe_name"
+
+          docker pull --platform "$INPUT_PLATFORM" "$INPUT_IMAGE"
+          docker save "$INPUT_IMAGE" | gzip -9 > "$archive"
+
+          ls -lh "$archive"
+          echo "archive=$archive" >> "$GITHUB_OUTPUT"
+          echo "artifact_name=$artifact_name" >> "$GITHUB_OUTPUT"
+        id: package
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.package.outputs.artifact_name }}
+          path: ${{ steps.package.outputs.archive }}
+          retention-days: 7
